@@ -32,6 +32,9 @@ import {
 import { Lane } from './types/game';
 import { runAITurn } from './game/ai';
 import { BattlefieldView } from './components/BattlefieldView';
+import { TacticalMapView } from './components/TacticalMapView';
+import { TacticalGameState } from './types/tactical';
+import { initializeTacticalGame } from './game/tactical/turnManager';
 import { CardView } from './components/CardView';
 import { DeckBuilder } from './components/DeckBuilder';
 import { UnitForge } from './components/UnitForge/UnitForge';
@@ -157,8 +160,16 @@ export default function App() {
 
   // Active Game State
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [tacticalGameState, setTacticalGameState] = useState<TacticalGameState | null>(null);
   const [selectedAirbase, setSelectedAirbase] = useState<StructureInstance | null>(null);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
+
+  const handleStartTacticalMatch = (preset: 'frontline' | 'citadel' | 'glade' = 'frontline') => {
+    const initialState = initializeTacticalGame(preset);
+    setTacticalGameState(initialState);
+    setGameState(null);
+    setScreen('battle');
+  };
 
   // Elo Tier Calculation in Thai
   const getUserRankTitle = (elo: number) => {
@@ -452,6 +463,7 @@ export default function App() {
     setMultiplayerRoom(null);
     setMultiplayerRole(null);
     setGameState(null);
+    setTacticalGameState(null);
     setScreen('lobby');
   };
 
@@ -459,6 +471,7 @@ export default function App() {
   const startMatch = (mode: GamePlayMode, mapPresetId: string, roomCode?: string) => {
     setMultiplayerRoom(null);
     setMultiplayerRole(null);
+    setTacticalGameState(null);
     const activeDeck = decks.find((d) => d.id === selectedDeckId) || STARTER_DECKS[0];
     const opponentDeck = STARTER_DECKS[1];
 
@@ -1327,6 +1340,20 @@ export default function App() {
     );
   }
 
+  if (screen === 'battle' && tacticalGameState) {
+    return (
+      <TacticalMapView
+        state={tacticalGameState}
+        onStateChange={setTacticalGameState}
+        viewerRole={multiplayerRole || 'player1'}
+        onExitMatch={() => {
+          setTacticalGameState(null);
+          setScreen('lobby');
+        }}
+      />
+    );
+  }
+
   if (screen === 'lobby' || !gameState) {
     return (
       <>
@@ -1361,6 +1388,7 @@ export default function App() {
           onSelectDeckId={setSelectedDeckId}
           onStartGame={startMatch}
           onStartMultiplayerMatch={startMultiplayerMatch}
+          onStartTacticalMatch={handleStartTacticalMatch}
           customCards={customCards}
           onOpenDeckBuilder={() => setScreen('deckbuilder')}
           onOpenCardCreator={() => {

@@ -273,6 +273,6 @@ export interface GameState {
   combatLog: string[];
   winner: 'player1' | 'player2' | null;
   winReason?: string;
-  mode: 'ai-skirmish' | 'hotseat' | 'airborne-scenario' | 'room-lobby';
+  mode: 'tactical-rts' | 'ai-skirmish' | 'hotseat' | 'airborne-scenario' | 'room-lobby';
   roomCode?: string;
 }

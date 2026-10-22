@@ -28,7 +28,7 @@ import {
   generateRoomCode,
 } from '../services/multiplayerService';
 
-export type GamePlayMode = 'ai-skirmish' | 'hotseat' | 'airborne-scenario' | 'room-lobby';
+export type GamePlayMode = 'tactical-rts' | 'ai-skirmish' | 'hotseat' | 'airborne-scenario' | 'room-lobby';
 
 interface MultiplayerLobbyProps {
   decks: DeckConfig[];
@@ -36,6 +36,7 @@ interface MultiplayerLobbyProps {
   onSelectDeckId: (id: string) => void;
   onStartGame: (mode: GamePlayMode, mapId: string, roomCode?: string) => void;
   onStartMultiplayerMatch?: (room: MultiplayerRoomData, role: 'player1' | 'player2') => void;
+  onStartTacticalMatch?: (preset?: 'frontline' | 'citadel' | 'glade') => void;
   customCards?: CardDefinition[];
   onOpenDeckBuilder: () => void;
   onOpenCardCreator: () => void;
@@ -53,6 +54,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   onSelectDeckId,
   onStartGame,
   onStartMultiplayerMatch,
+  onStartTacticalMatch,
   customCards = [],
   onOpenDeckBuilder,
   onOpenCardCreator,
@@ -63,7 +65,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   userElo,
   userRank,
 }) => {
-  const [mode, setMode] = useState<GamePlayMode>('ai-skirmish');
+  const [mode, setMode] = useState<GamePlayMode>('tactical-rts');
   const [selectedMapId, setSelectedMapId] = useState<string>('map-forest-frontier');
 
   // Multiplayer sub-tab: 'create' | 'join' | 'browse'
@@ -226,6 +228,11 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
 
   const handleStartStandard = () => {
     soundFx.playDeploy();
+    if (mode === 'tactical-rts' && onStartTacticalMatch) {
+      const preset = selectedMapId === 'map-ashen-desert' ? 'citadel' : selectedMapId === 'map-arcane-ruins' ? 'glade' : 'frontline';
+      onStartTacticalMatch(preset);
+      return;
+    }
     onStartGame(mode, selectedMapId);
   };
 
@@ -340,6 +347,34 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Mode 0: Tactical RTS Overhaul (Featured & Default) */}
+            <button
+              onClick={() => {
+                setMode('tactical-rts');
+                soundFx.playCardSelect();
+              }}
+              className={`p-4 rounded-xl border text-left transition-all col-span-1 sm:col-span-2 ${
+                mode === 'tactical-rts'
+                  ? 'border-cyan-400 bg-gradient-to-r from-cyan-950/70 via-slate-900/90 to-blue-950/70 ring-2 ring-cyan-400 shadow-xl shadow-cyan-950/60'
+                  : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-2 rounded-lg bg-cyan-500/20 text-cyan-300">
+                  <Swords className="w-5 h-5" />
+                </span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-300 bg-cyan-900/80 px-2.5 py-0.5 rounded border border-cyan-400/60 animate-pulse">
+                  ⭐ ระบบหลักใหม่: RTS แผนที่กริด & หมอกสงคราม (Fog of War)
+                </span>
+              </div>
+              <div className="font-extrabold text-base text-cyan-200">
+                สมรภูมิยุทธวิธี RTS (Tactical Grid, AP & Fog of War)
+              </div>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                สนามรบเทิร์นเบสแผนที่กริด 2D พร้อมหมอกสงครามสมจริง, ออกคำสั่งยูนิตโดยตรงด้วย Action Points (AP), สร้างกองทัพจากกองบัญชาการเน็กซัส (HQ), ซูม/เลื่อนมุมมอง และตั้งแนวระวังภัยดักยิง Overwatch
+              </p>
+            </button>
+
             {/* Mode 1: AI Skirmish */}
             <button
               onClick={() => {
