@@ -1,0 +1,8 @@
+{
+  "name": "Remix RIFTBOUND: Frontline Nexus",
+  "description": "Multiverse tactical card strategy game combining freeform deckbuilding across dieselpunk, arcane, cyber, and mythic universes with three-lane grid warfare and outpost conquest.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Profile Documents & Private Subcollections
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create, update: if isOwner(userId) && isValidId(userId);
+      allow delete: if false;
+
+      // Private Creator Content (Drafts & User Library)
+      match /content/{contentId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(contentId) && incoming().ownerId == userId;
+        allow delete: if isOwner(userId) && isValidId(contentId);
+      }
+
+      // Legacy units & decks compatibility
+      match /units/{unitId} {
+        allow get, list, create, update, delete: if isOwner(userId) && isValidId(unitId);
+      }
+      match /decks/{deckId} {
+        allow get, list, create, update, delete: if isOwner(userId) && isValidId(deckId);
+      }
+      match /assets/{assetId} {
+        allow get, list, create, update, delete: if isOwner(userId) && isValidId(assetId);
+      }
+    }
+
+    // Public Gallery Collection (Discovered by all players)
+    match /public_content/{contentId} {
+      // Anyone can read public cards
+      allow get, list: if true;
+
+      // Only the author can create or update their public card
+      allow create: if isSignedIn() && isValidId(contentId) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().visibility == 'public';
+
+      allow update: if isSignedIn() && isValidId(contentId) &&
+        existing().ownerId == request.auth.uid &&
+        incoming().ownerId == request.auth.uid;
+
+      // Only the author can unpublish (delete from public gallery)
+      allow delete: if isSignedIn() && isValidId(contentId) &&
+        existing().ownerId == request.auth.uid;
+    }
+
+    // Content Moderation Reports
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && isValidId(reportId) &&
+        incoming().reporterId == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // Multiplayer Battle Rooms (Cross-Device Matchmaking & Synchronization)
+    match /rooms/{roomId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && isValidId(roomId) &&
+        incoming().hostId == request.auth.uid &&
+        incoming().id == roomId;
+      allow update: if isSignedIn() && isValidId(roomId) && (
+        (existing().guestId == null && incoming().guestId == request.auth.uid) ||
+        (existing().hostId == request.auth.uid) ||
+        (existing().guestId == request.auth.uid)
+      );
+      allow delete: if isSignedIn() && isValidId(roomId) &&
+        existing().hostId == request.auth.uid;
+    }
+  }
+}

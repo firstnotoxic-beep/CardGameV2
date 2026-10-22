@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with tactical stats and ELO",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "elo": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "displayName", "elo", "createdAt", "updatedAt"]
+    },
+    "CreatorContent": {
+      "title": "CreatorContent",
+      "description": "User-generated unit, spell, tactic, structure or relic",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "ownerDisplayName": { "type": "string" },
+        "contentType": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "universe": { "type": "string" },
+        "rarity": { "type": "string" },
+        "cost": { "type": "object" },
+        "stats": { "type": "object" },
+        "abilities": { "type": "array" },
+        "targetRule": { "type": "object" },
+        "keywords": { "type": "array" },
+        "flavorText": { "type": "string" },
+        "artwork": { "type": "object" },
+        "visibility": { "type": "string" },
+        "publicationStatus": { "type": "string" },
+        "schemaVersion": { "type": "string" },
+        "contentVersion": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "originalContentId": { "type": "string" },
+        "forkedFromVersion": { "type": "number" }
+      },
+      "required": ["id", "ownerId", "contentType", "name", "universe", "visibility", "publicationStatus", "createdAt", "updatedAt"]
+    },
+    "ContentReport": {
+      "title": "ContentReport",
+      "description": "User report for inappropriate or infringing public content",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "contentId": { "type": "string" },
+        "reporterId": { "type": "string" },
+        "reason": { "type": "string" },
+        "notes": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "contentId", "reporterId", "reason", "timestamp"]
+    },
+    "MultiplayerRoom": {
+      "title": "MultiplayerRoom",
+      "description": "Real-time cross-device battle room state",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "status": { "type": "string" },
+        "hostId": { "type": "string" },
+        "hostName": { "type": "string" },
+        "hostElo": { "type": "number" },
+        "hostRank": { "type": "string" },
+        "hostDeck": { "type": "object" },
+        "guestId": { "type": "string" },
+        "guestName": { "type": "string" },
+        "guestElo": { "type": "number" },
+        "guestRank": { "type": "string" },
+        "guestDeck": { "type": "object" },
+        "mapPresetId": { "type": "string" },
+        "gameState": { "type": "object" },
+        "lastAction": { "type": "object" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "status", "hostId", "hostName", "mapPresetId", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User account documents"
+    },
+    "/users/{userId}/content/{contentId}": {
+      "schema": "CreatorContent",
+      "description": "Private and draft cards/units owned by user"
+    },
+    "/public_content/{contentId}": {
+      "schema": "CreatorContent",
+      "description": "Publicly published cards and units in community gallery"
+    },
+    "/reports/{reportId}": {
+      "schema": "ContentReport",
+      "description": "Content moderation reports"
+    },
+    "/rooms/{roomId}": {
+      "schema": "MultiplayerRoom",
+      "description": "Cross-device multiplayer battle rooms and real-time state synchronization"
+    }
+  }
+}

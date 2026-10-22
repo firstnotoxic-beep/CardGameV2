@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Cinzel', serif;
+    --font-sans: 'Prompt', 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  body {
+    background-color: #080d1a;
+    color: #e2e8f0;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+.font-display {
+  font-family: 'Cinzel', serif;
+}
+
+.font-mono-nums {
+  font-family: 'Space Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom Tactical Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}
+
+/* Tactical Grid & Card Glows */
+@keyframes rift-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 0 10px rgba(168, 85, 247, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.7), inset 0 0 15px rgba(168, 85, 247, 0.4);
+  }
+}
+
+@keyframes tactical-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(14, 165, 233, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(14, 165, 233, 0.65);
+  }
+}
+
+.glow-rift {
+  animation: rift-pulse 3s infinite ease-in-out;
+}
+
+.glow-tactical {
+  animation: tactical-pulse 2.5s infinite ease-in-out;
+}
+
