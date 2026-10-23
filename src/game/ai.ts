@@ -1,7 +1,13 @@
 import { GameState, TerrainCell, UnitInstance } from '../types/game';
 import { CARD_DATABASE } from '../data/cards';
 import { getCardDef } from './cardRegistry';
-import { getAttackableCells, getCellId, getReachableCells } from './battlefield';
+import {
+  captureOutpostOnMove,
+  generateEntityId,
+  getAttackableCells,
+  getCellId,
+  getReachableCellCosts,
+} from './battlefield';
 import { executeCombat, performAirborneDeployment } from './combat';
 
 export function runAITurn(initialState: GameState): GameState {
@@ -36,7 +42,7 @@ export function runAITurn(initialState: GameState): GameState {
           ai.resources.charge -= chargeCost;
           ai.resources.rift -= riftCost;
 
-          const unitId = `ai-unit-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const unitId = generateEntityId('ai-unit');
           state.units[unitId] = {
             id: unitId,
             cardInstanceId: cardInst.instanceId,
@@ -74,7 +80,7 @@ export function runAITurn(initialState: GameState): GameState {
           ai.resources.charge -= chargeCost;
           ai.resources.rift -= riftCost;
 
-          const structId = `ai-struct-${Date.now()}`;
+          const structId = generateEntityId('ai-struct');
           state.structures[structId] = {
             id: structId,
             cardInstanceId: cardInst.instanceId,
@@ -119,7 +125,8 @@ export function runAITurn(initialState: GameState): GameState {
   for (const unit of aiUnits) {
     if (!state.units[unit.id]) continue; // unit might have been eliminated
 
-    const reachable = getReachableCells(unit, state.cells, state.units);
+    const reachableCosts = getReachableCellCosts(unit, state.cells, state.units);
+    const reachable = Array.from(reachableCosts.keys());
     if (reachable.length > 0) {
       // Prioritize cells that move forward toward row 3 (Outposts) or row 6 (Player Base)
       reachable.sort((a, b) => {
@@ -141,8 +148,10 @@ export function runAITurn(initialState: GameState): GameState {
         unit.row = targetCell.row;
         unit.col = targetCell.col;
         unit.lane = targetCell.lane;
+        // AI moves once per turn; keep movePoints consistent with the cost actually spent
+        unit.movePoints = Math.max(0, reachableCosts.get(bestCellId) ?? 0);
         unit.hasMovedThisTurn = true;
-        unit.movePoints = 0;
+        captureOutpostOnMove(state, unit);
       }
     }
   }

@@ -11,7 +11,13 @@ import {
 import { CARD_DATABASE } from '../data/cards';
 import { getCardDef } from './cardRegistry';
 import { executeResolvedAbility } from './rules/abilityExecutor';
-import { getCellId, getReachableCells, TOTAL_ROWS } from './battlefield';
+import {
+  captureOutpostOnMove,
+  generateEntityId,
+  getCellId,
+  getReachableCellCosts,
+  TOTAL_ROWS,
+} from './battlefield';
 import { soundFx } from '../utils/audio';
 
 export interface TargetValidationResult {
@@ -441,10 +447,11 @@ export function resolveCardPlay(
       if (target.cellId && next.cells[target.cellId]) {
         const center = next.cells[target.cellId];
         const affectedCellIds = [
-          target.cellId,
-          getCellId(Math.max(0, center.row - 1), center.col),
-          getCellId(Math.min(TOTAL_ROWS - 1, center.row + 1), center.col),
-        ];
+          [0, 0], [-1, 0], [1, 0], [0, -1], [0, 1],
+        ]
+          .map(([dr, dc]) => ({ r: center.row + dr, c: center.col + dc }))
+          .filter(({ r, c }) => r >= 0 && r < TOTAL_ROWS && c >= 0 && c <= 2)
+          .map(({ r, c }) => getCellId(r, c));
 
         let hitCount = 0;
         affectedCellIds.forEach((cId) => {
@@ -460,7 +467,7 @@ export function resolveCardPlay(
           }
         });
         soundFx.playAttack('kinetic');
-        logMessage = `[ดงอุกกาบาต] ${player.name} สั่งดงอุกกาบาต (Meteor Field) ถล่มบริเวณแถว ${center.row} โดนยูนิต ${hitCount} ตัว สร้างความเสียหาย 3 หน่วย!`;
+        logMessage = `[ดงอุกกาบาต] ${player.name} สั่งดงอุกกาบาต (Meteor Field) ถล่มบริเวณ ${target.cellId} และช่องรอบข้าง โดนยูนิต ${hitCount} ตัว สร้างความเสียหาย 3 หน่วย!`;
       }
       break;
     }
@@ -642,8 +649,9 @@ export function executeUnitMovement(
     return { nextState: state, success: false, logMessage: 'ยูนิตนี้เดินทัพไปแล้วในเทิร์นนี้' };
   }
 
-  const reachable = getReachableCells(unit, next.cells, next.units);
-  if (!reachable.includes(destinationCellId)) {
+  const reachable = getReachableCellCosts(unit, next.cells, next.units);
+  const remainingMove = reachable.get(destinationCellId);
+  if (remainingMove === undefined) {
     return { nextState: state, success: false, logMessage: 'เส้นทางเดินทัพไม่ถูกต้องหรือถูกปิดกั้น' };
   }
 
@@ -662,11 +670,15 @@ export function executeUnitMovement(
   unit.row = destCell.row;
   unit.col = destCell.col;
   unit.lane = destCell.lane;
-  unit.hasMovedThisTurn = true;
-  unit.movePoints = 0;
+  // Deduct actual path cost; unit may keep moving until movePoints run out
+  unit.movePoints = Math.max(0, remainingMove);
+  unit.hasMovedThisTurn = unit.movePoints <= 0;
 
   // Occupy new cell
   destCell.unitId = unit.id;
+
+  // Moving onto a supply/relay outpost captures it
+  captureOutpostOnMove(next, unit);
 
   soundFx.playDeploy();
   const logMessage = `[เดินทัพ] ${unit.name} เคลื่อนพลไปยังเลน ${destCell.lane.toUpperCase()} (${destinationCellId})`;

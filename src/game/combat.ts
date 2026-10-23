@@ -8,7 +8,7 @@ import {
   UnitInstance,
 } from '../types/game';
 import { CARD_DATABASE } from '../data/cards';
-import { getCellId } from './battlefield';
+import { generateEntityId, getCellId } from './battlefield';
 import { soundFx } from '../utils/audio';
 
 export interface CombatResult {
@@ -76,8 +76,10 @@ export function executeCombat(
     const coverBonus = targetCell.coverBonus || 0;
     // Check for Fortress Outpost aura
     let fortressBonus = 0;
-    const centerOutpost = next.outposts['outpost-1'];
-    if (centerOutpost && centerOutpost.owner === defender.owner && defender.lane === 'center') {
+    const fortressOutpost = Object.values(next.outposts).find(
+      (o) => o.type === 'fortress' && o.lane === defender.lane
+    );
+    if (fortressOutpost && fortressOutpost.owner === defender.owner) {
       fortressBonus = 2;
     }
 
@@ -206,6 +208,11 @@ export function resolveOutpostCaptures(state: GameState): GameState {
 
     outpost.isContested = !!enemyThreat;
 
+    // Supply/Relay outposts are captured instantly by moving onto them (see captureOutpostOnMove).
+    // Only the Fortress uses turn-based capture, and progress pauses while contested.
+    if (outpost.type !== 'fortress') continue;
+    if (outpost.isContested && outpost.owner !== occupyingOwner) continue;
+
     if (outpost.owner === occupyingOwner) {
       // Already owned by this player
       outpost.captureProgress = 100;
@@ -288,7 +295,7 @@ export function performAirborneDeployment(
 
   // Create Paratrooper unit
   const cardDef = CARD_DATABASE['IF-05'];
-  const unitId = `unit-paratrooper-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const unitId = generateEntityId('unit-paratrooper');
 
   next.units[unitId] = {
     id: unitId,

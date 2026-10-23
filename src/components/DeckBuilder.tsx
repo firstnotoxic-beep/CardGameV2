@@ -137,9 +137,9 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-7xl mx-auto p-4 select-none">
+    <div className="rift-screen rift-deck-builder flex flex-col h-full w-full max-w-7xl mx-auto p-4 select-none">
       {/* HEADER */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4 gap-4 flex-wrap">
+      <div className="rift-page-header flex items-center justify-between pb-3 border-b border-slate-800 mb-4 gap-4 flex-wrap">
         <div>
           <h2 className="font-display text-xl font-bold text-slate-100 flex items-center gap-2">
             <Layers className="w-5 h-5 text-cyan-400" /> สตูดิโอจัดเด็คสถาปนิก (Deck Architect Studio)
@@ -206,7 +206,7 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({
       {/* MAIN TWO-COLUMN SPLIT: LEFT CATALOG & RIGHT DECK ROSTER */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 overflow-hidden">
         {/* LEFT COLUMN: CARD CATALOG & SEARCH (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-3 overflow-hidden">
+        <div className="rift-panel rift-catalog-panel lg:col-span-7 flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-3 overflow-hidden">
           {/* SEARCH & FILTERS */}
           <div className="flex flex-col gap-2 mb-3">
             <div className="relative w-full">
@@ -260,7 +260,7 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({
                 <div
                   key={card.id}
                   onClick={() => setInspectedCard(card)}
-                  className="relative group bg-slate-900/90 rounded-lg border border-slate-800 p-2 flex flex-col justify-between hover:border-cyan-500 transition-all cursor-pointer"
+                  className="rift-card-tile relative group bg-slate-900/90 rounded-lg border border-slate-800 p-2 flex flex-col justify-between hover:border-cyan-500 transition-all cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-1 mb-1">
                     <span className="text-[11px] font-bold text-slate-200 truncate">
@@ -329,7 +329,7 @@ export const DeckBuilder: React.FC<DeckBuilderProps> = ({
         </div>
 
         {/* RIGHT COLUMN: DECK ROSTER & VALIDATION (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-3 overflow-hidden">
+        <div className="rift-panel rift-roster-panel lg:col-span-5 flex flex-col bg-slate-950 rounded-xl border border-slate-800 p-3 overflow-hidden">
           {/* Deck Validation Bar */}
           <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 mb-3">
             <div className="flex items-center justify-between mb-1.5">

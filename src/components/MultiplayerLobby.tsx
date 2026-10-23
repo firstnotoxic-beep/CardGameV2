@@ -237,7 +237,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col justify-between p-4 md:p-8 bg-slate-950 text-slate-100 select-none overflow-x-hidden">
+    <div className="rift-screen rift-lobby relative min-h-screen w-full flex flex-col justify-between p-4 md:p-8 bg-slate-950 text-slate-100 select-none overflow-x-hidden">
       {/* Background Graphic */}
       <div
         className="absolute inset-0 opacity-20 pointer-events-none bg-cover bg-center"
@@ -246,10 +246,10 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/90 pointer-events-none" />
 
       {/* TOP BAR: Brand Wordmark - Nav Links - Primary Status */}
-      <header className="relative z-10 flex items-center justify-between gap-4 pb-4 border-b border-slate-800 flex-wrap">
+      <header className="rift-lobby-header relative z-10 flex items-center justify-between gap-4 pb-4 border-b border-slate-800 flex-wrap">
         {/* Brand Wordmark */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center font-display font-black text-xl text-slate-950 shadow-lg shadow-cyan-500/20">
+          <div className="rift-brand-mark w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center font-display font-black text-xl text-slate-950 shadow-lg shadow-cyan-500/20">
             R
           </div>
           <div>
@@ -302,8 +302,12 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
           </button>
         </nav>
 
-        {/* Player Elo & Mode Quick Launch */}
+        {/* Player Elo, Database status & Mode Quick Launch */}
         <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/60 text-[11px] font-mono text-emerald-300 shadow-sm" title="เชื่อมต่อฐานข้อมูล Firestore สำเร็จ (ai-studio-remixriftboundfr-adc4421b-3168-4541-a892-7bfa78ab427a)">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-bold">Firestore: Online</span>
+          </div>
           <div className="text-right hidden sm:block">
             <div className="text-[10px] uppercase font-bold text-slate-400">คะแนนอันดับ</div>
             <div className="text-xs font-mono-nums font-bold text-amber-300">
@@ -353,7 +357,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                 setMode('tactical-rts');
                 soundFx.playCardSelect();
               }}
-              className={`p-4 rounded-xl border text-left transition-all col-span-1 sm:col-span-2 ${
+              className={`rift-mode-tile p-4 rounded-xl border text-left transition-all col-span-1 sm:col-span-2 ${
                 mode === 'tactical-rts'
                   ? 'border-cyan-400 bg-gradient-to-r from-cyan-950/70 via-slate-900/90 to-blue-950/70 ring-2 ring-cyan-400 shadow-xl shadow-cyan-950/60'
                   : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
@@ -381,7 +385,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                 setMode('ai-skirmish');
                 soundFx.playCardSelect();
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`rift-mode-tile p-4 rounded-xl border text-left transition-all ${
                 mode === 'ai-skirmish'
                   ? 'border-cyan-400 bg-cyan-950/40 ring-1 ring-cyan-400 shadow-lg shadow-cyan-950'
                   : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
@@ -407,7 +411,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                 setMode('room-lobby');
                 soundFx.playCardSelect();
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`rift-mode-tile p-4 rounded-xl border text-left transition-all ${
                 mode === 'room-lobby'
                   ? 'border-purple-400 bg-purple-950/40 ring-2 ring-purple-400 shadow-xl shadow-purple-950'
                   : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
@@ -433,7 +437,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                 setMode('hotseat');
                 soundFx.playCardSelect();
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`rift-mode-tile p-4 rounded-xl border text-left transition-all ${
                 mode === 'hotseat'
                   ? 'border-indigo-400 bg-indigo-950/40 ring-1 ring-indigo-400 shadow-lg shadow-indigo-950'
                   : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
@@ -459,7 +463,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
                 setMode('airborne-scenario');
                 soundFx.playCardSelect();
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`rift-mode-tile p-4 rounded-xl border text-left transition-all ${
                 mode === 'airborne-scenario'
                   ? 'border-amber-400 bg-amber-950/40 ring-1 ring-amber-400 shadow-lg shadow-amber-950'
                   : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'

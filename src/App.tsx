@@ -1434,9 +1434,9 @@ export default function App() {
     : null;
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-slate-950 text-slate-100 select-none overflow-x-hidden">
+    <div className="rift-game-screen flex flex-col min-h-screen w-full bg-slate-950 text-slate-100 select-none overflow-x-hidden">
       {/* 1. แถบสถานะส่วนบนและตัวจับเวลาเทิร์น (TOP STATUS BAR & TURN TIMER) */}
-      <header className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 z-20 flex-wrap gap-2">
+      <header className="rift-game-header flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 z-20 flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <button
             onClick={handleExitBattle}
@@ -1592,7 +1592,7 @@ export default function App() {
         <div className="lg:col-span-8 flex flex-col justify-center relative">
           {/* FLOATING TARGETING BANNER */}
           {gameState.actionMode === 'card-targeting' && targetingCardDef && (
-            <div className="mb-2 p-3 bg-purple-950/95 border border-purple-500 rounded-xl shadow-2xl flex items-center justify-between gap-3 backdrop-blur-md z-30 animate-pulse">
+            <div className="rift-targeting-banner mb-2 p-3 bg-purple-950/95 border border-purple-500 rounded-xl shadow-2xl flex items-center justify-between gap-3 backdrop-blur-md z-30 animate-pulse">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-purple-900 border border-purple-400 flex items-center justify-center shrink-0">
                   <Target className="w-5 h-5 text-purple-200" />
@@ -1639,7 +1639,7 @@ export default function App() {
         {/* RIGHT CONTROL COLUMN: INSPECTOR & LOGS (4 cols) */}
         <div className="lg:col-span-4 flex flex-col gap-3 justify-between">
           {/* Active / Local Player Resource Hub */}
-          <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-xl">
+          <div className="rift-panel rift-resource-panel p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 คลังพลังงาน ({myPlayer.name})
@@ -1680,7 +1680,7 @@ export default function App() {
           </div>
 
           {/* Card / Unit Tactical Inspector */}
-          <div className="flex-1 flex flex-col items-center justify-center p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+          <div className="rift-inspector flex-1 flex flex-col items-center justify-center p-3 rounded-xl bg-slate-900/70 border border-slate-800">
             {inspectedCard ? (
               <div className="scale-90 sm:scale-95 transition-transform">
                 <CardView card={inspectedCard} variant="detail" />
@@ -1698,7 +1698,7 @@ export default function App() {
           <button
             onClick={handleNextPhase}
             disabled={isAiThinking || !isMyTurn}
-            className={`w-full py-3.5 px-4 rounded-xl font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition-all ${
+            className={`rift-phase-cta w-full py-3.5 px-4 rounded-xl font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition-all ${
               !isMyTurn
                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                 : gameState.phase === 'capture' || gameState.phase === 'end'
@@ -1723,7 +1723,7 @@ export default function App() {
       </div>
 
       {/* 3. แถบการ์ดบนมือ (BOTTOM HAND CAROUSEL DOCK - Renders local player's hand) */}
-      <div className="sticky bottom-0 z-20 w-full bg-slate-950/95 border-t border-slate-800 p-2.5 backdrop-blur-md">
+      <div className="rift-hand-dock sticky bottom-0 z-20 w-full bg-slate-950/95 border-t border-slate-800 p-2.5 backdrop-blur-md">
         <div className="flex items-center justify-between max-w-7xl mx-auto gap-3">
           <div className="text-xs font-bold text-slate-400 shrink-0 hidden sm:block">
             <span>การ์ดบนมือของคุณ ({myPlayer.hand.length || 0})</span>
@@ -1774,7 +1774,7 @@ export default function App() {
 
       {/* COMBAT LOG SLIDE-OVER */}
       {showCombatLog && (
-        <div className="fixed bottom-24 right-4 z-40 max-w-md w-full bg-slate-950 border border-slate-800 rounded-xl p-3 shadow-2xl max-h-60 overflow-y-auto font-mono-nums text-xs">
+        <div className="rift-combat-log fixed bottom-24 right-4 z-40 max-w-md w-full bg-slate-950 border border-slate-800 rounded-xl p-3 shadow-2xl max-h-60 overflow-y-auto font-mono-nums text-xs">
           <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 mb-2">
             <span className="font-bold text-slate-300">บันทึกการปะทะทางยุทธวิธี</span>
             <button onClick={() => setShowCombatLog(false)} className="text-slate-500 hover:text-slate-300 cursor-pointer">

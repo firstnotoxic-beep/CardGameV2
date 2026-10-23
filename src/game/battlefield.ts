@@ -1,4 +1,4 @@
-import { Lane, OutpostState, TerrainCell, TerrainType, UnitInstance } from '../types/game';
+import { GameState, Lane, OutpostState, TerrainCell, TerrainType, UnitInstance } from '../types/game';
 
 export interface MapPreset {
   id: string;
@@ -165,13 +165,29 @@ export function generateBattlefield(presetId: string = 'map-forest-frontier'): {
   return { cells, outposts };
 }
 
+// Unique entity IDs: timestamp + counter + random suffix so same-millisecond creations never collide
+let entityIdCounter = 0;
+export function generateEntityId(prefix: string): string {
+  entityIdCounter = (entityIdCounter + 1) % 1_000_000;
+  return `${prefix}-${Date.now()}-${entityIdCounter}-${Math.floor(Math.random() * 100000)}`;
+}
+
 // Pathfinding: Get all reachable cells for a unit using BFS
 export function getReachableCells(
   unit: UnitInstance,
   cells: Record<string, TerrainCell>,
   units: Record<string, UnitInstance>
 ): string[] {
-  if (unit.hasMovedThisTurn || unit.movePoints <= 0) return [];
+  return Array.from(getReachableCellCosts(unit, cells, units).keys());
+}
+
+// Pathfinding with costs: returns reachable cellId -> best remaining move points after arriving there
+export function getReachableCellCosts(
+  unit: UnitInstance,
+  cells: Record<string, TerrainCell>,
+  units: Record<string, UnitInstance>
+): Map<string, number> {
+  if (unit.hasMovedThisTurn || unit.movePoints <= 0) return new Map();
 
   const reachable = new Set<string>();
   const visitedCosts = new Map<string, number>();
@@ -232,7 +248,9 @@ export function getReachableCells(
     }
   }
 
-  return Array.from(reachable);
+  const result = new Map<string, number>();
+  reachable.forEach((id) => result.set(id, visitedCosts.get(id) ?? 0));
+  return result;
 }
 
 // Attack Targeting: Calculate eligible target cells (enemy units, structures, or enemy base)
@@ -258,7 +276,10 @@ export function getAttackableCells(
       const colDist = Math.abs(c - unit.col);
       const totalDist = rowDist + colDist;
 
-      if (totalDist > 0 && totalDist <= range) {
+      // Straight-line only: no diagonal attacks
+      const isStraightLine = rowDist === 0 || colDist === 0;
+
+      if (totalDist > 0 && totalDist <= range && isStraightLine) {
         // Target 1: Enemy Unit
         if (cell.unitId) {
           const targetUnit = units[cell.unitId];
@@ -316,4 +337,21 @@ export function getAirborneLandingCells(
   }
 
   return landingCells;
+}
+
+// Move-to-capture: a capturing unit that moves onto a supply/relay outpost captures it immediately.
+// Fortress outposts are defensive structures and are NOT captured by moving onto them.
+export function captureOutpostOnMove(state: GameState, unit: UnitInstance): string | null {
+  const cell = state.cells[getCellId(unit.row, unit.col)];
+  if (!cell || !cell.outpostId || !unit.canCapture) return null;
+  const outpost = state.outposts[cell.outpostId];
+  if (!outpost || outpost.type === 'fortress' || outpost.owner === unit.owner) return null;
+  outpost.owner = unit.owner;
+  outpost.captureProgress = 100;
+  outpost.capturingPlayer = null;
+  outpost.isContested = false;
+  const ownerName = unit.owner === 'player1' ? state.player1.name : state.player2.name;
+  const msg = `[ยึดฐาน] ★ ${ownerName} ส่ง ${unit.name} เข้ายึด ${outpost.name} ได้สำเร็จ!`;
+  state.combatLog.unshift(msg);
+  return msg;
 }

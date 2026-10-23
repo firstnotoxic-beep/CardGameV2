@@ -126,9 +126,9 @@ export const CardCreator: React.FC<CardCreatorProps> = ({ onSaveCustomCard, onCl
   };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-5xl mx-auto p-4 select-none">
+    <div className="rift-screen rift-creator flex flex-col h-full w-full max-w-5xl mx-auto p-4 select-none">
       {/* HEADER */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+      <div className="rift-page-header flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <div>
           <h2 className="font-display text-xl font-bold text-slate-100 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-pink-400" /> วงแหวนผู้สร้าง · เตาหลอมการ์ดดั้งเดิม (Creator's Forge)
@@ -148,7 +148,7 @@ export const CardCreator: React.FC<CardCreatorProps> = ({ onSaveCustomCard, onCl
       {/* TWO COLUMN FORM & LIVE PREVIEW */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 flex-1 overflow-y-auto">
         {/* LEFT COLUMN: EDIT CONTROLS (7 cols) */}
-        <div className="md:col-span-7 space-y-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
+        <div className="rift-panel rift-creator-form md:col-span-7 space-y-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
           {/* Card Name */}
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1">ชื่อตัวละคร / การ์ด</label>

@@ -4,6 +4,7 @@ import { Shield, Swords, Heart, Flag, Navigation, Plane, AlertTriangle, Zap, Rad
 import { UNIVERSE_CONFIG, CARD_DATABASE } from '../data/cards';
 import { getCellId } from '../game/battlefield';
 import { CardArtwork } from './CardArtwork';
+import { EffectsOverlay } from './EffectsOverlay';
 
 interface BattlefieldViewProps {
   state: GameState;
@@ -48,7 +49,10 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
   const isLaneTargeting = isCardTargeting && selectedCardDef?.targetRule?.mode === 'lane';
 
   return (
-    <div className="relative flex flex-col items-center w-full max-w-4xl mx-auto rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl p-4 overflow-hidden select-none">
+    <div
+      data-battlefield-root
+      className="rift-board-root relative flex flex-col items-center w-full max-w-4xl mx-auto rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl p-4 overflow-hidden select-none"
+    >
       {/* Background Arena Texture */}
       <div
         className="absolute inset-0 opacity-15 pointer-events-none bg-cover bg-center"
@@ -57,7 +61,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-transparent to-slate-950/80 pointer-events-none" />
 
       {/* TOP HEADER: OPPONENT NEXUS BASE (Row 0) */}
-      <div className="relative z-10 flex items-center justify-between w-full px-4 py-2.5 mb-3 bg-gradient-to-r from-slate-900/90 via-rose-950/40 to-slate-900/90 rounded-xl border border-rose-900/50 shadow-lg">
+      <div data-nexus-health="player2" className="rift-nexus rift-nexus-opponent relative z-10 flex items-center justify-between w-full px-4 py-2.5 mb-3 bg-gradient-to-r from-slate-900/90 via-rose-950/40 to-slate-900/90 rounded-xl border border-rose-900/50 shadow-lg">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-rose-950 border border-rose-700/60 flex items-center justify-center text-rose-400 font-bold text-sm">
             Ω
@@ -82,7 +86,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
               {state.player2.baseHealth} / {state.player2.maxBaseHealth} HP
             </div>
           </div>
-          <div className="w-36 h-3 bg-slate-900 rounded-full overflow-hidden border border-rose-800/40 p-0.5">
+          <div className="rift-health-track w-36 h-3 bg-slate-900 rounded-full overflow-hidden border border-rose-800/40 p-0.5">
             <div
               className="h-full bg-gradient-to-r from-rose-600 to-rose-400 rounded-full transition-all duration-300"
               style={{
@@ -94,7 +98,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
       </div>
 
       {/* LANE TITLES / LANE TARGETING BUTTONS */}
-      <div className="relative z-10 grid grid-cols-3 gap-3 w-full mb-2 text-center text-xs font-semibold tracking-wider uppercase text-slate-400">
+      <div className="rift-lane-headings relative z-10 grid grid-cols-3 gap-3 w-full mb-2 text-center text-xs font-semibold tracking-wider uppercase text-slate-400">
         <button
           type="button"
           disabled={!isLaneTargeting}
@@ -142,7 +146,10 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
       </div>
 
       {/* 3-LANE BATTLEFIELD GRID (7 Rows x 3 Cols) */}
-      <div className="relative z-10 grid grid-rows-7 gap-2 w-full p-2 bg-slate-900/70 rounded-xl border border-slate-800/80">
+       <div
+        data-battlefield-grid
+        className="rift-board-grid relative z-10 grid grid-rows-7 gap-2 w-full p-2 bg-slate-900/70 rounded-xl border border-slate-800/80"
+      >
         {[0, 1, 2, 3, 4, 5, 6].map((row) => (
           <div key={`row-${row}`} className="grid grid-cols-3 gap-3">
             {[0, 1, 2].map((col) => {
@@ -164,6 +171,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
               return (
                 <div
                   key={cellId}
+                  data-cell-id={cellId}
                   onClick={() => {
                     if (isCardTargeting) {
                       if (isCardTarget) {
@@ -177,7 +185,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
                       onCellClick(cellId);
                     }
                   }}
-                  className={`relative min-h-[76px] sm:min-h-[86px] rounded-lg p-1.5 flex flex-col justify-between transition-all duration-200 cursor-pointer border ${
+                  className={`rift-cell relative min-h-[76px] sm:min-h-[86px] rounded-lg p-1.5 flex flex-col justify-between transition-all duration-200 cursor-pointer border ${
                     // Highlight states
                     isCardTarget
                       ? 'border-purple-400 bg-purple-950/50 ring-2 ring-purple-400/90 shadow-lg shadow-purple-950 animate-pulse z-20 scale-[1.02]'
@@ -248,7 +256,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
                     {/* 1. UNIT PRESENT */}
                     {unit ? (
                       <div
-                        className={`w-full rounded-md p-1.5 flex flex-col justify-between border transition-all ${
+                        className={`rift-unit-card w-full rounded-md p-1.5 flex flex-col justify-between border transition-all ${
                           unit.owner === 'player1'
                             ? 'bg-sky-950/70 border-sky-600/70 text-sky-100 shadow-md shadow-sky-950'
                             : 'bg-rose-950/70 border-rose-600/70 text-rose-100 shadow-md shadow-rose-950'
@@ -308,7 +316,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
                       </div>
                     ) : structure ? (
                       /* 2. STRUCTURE PRESENT (e.g. Airbase or Bunker) */
-                      <div className="w-full rounded-md p-1.5 bg-slate-900/90 border border-slate-700 text-slate-200 flex flex-col justify-between">
+                      <div className="rift-structure-card w-full rounded-md p-1.5 bg-slate-900/90 border border-slate-700 text-slate-200 flex flex-col justify-between">
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] font-bold text-amber-300 truncate">
                             {structure.name}
@@ -344,7 +352,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
                       </div>
                     ) : outpost ? (
                       /* 3. OUTPOST OBJECTIVE (Row 3 Frontline) */
-                      <div className="w-full h-full flex flex-col justify-between p-1 bg-slate-950/80 rounded border border-slate-800 text-center">
+                      <div className="rift-outpost-card w-full h-full flex flex-col justify-between p-1 bg-slate-950/80 rounded border border-slate-800 text-center">
                         <div className="flex items-center justify-between text-[10px]">
                           <span
                             className={`font-bold uppercase tracking-wider ${
@@ -407,7 +415,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
       </div>
 
       {/* BOTTOM FOOTER: PLAYER NEXUS BASE (Row 6) */}
-      <div className="relative z-10 flex items-center justify-between w-full px-4 py-2.5 mt-3 bg-gradient-to-r from-slate-900/90 via-sky-950/40 to-slate-900/90 rounded-xl border border-sky-900/50 shadow-lg">
+      <div data-nexus-health="player1" className="rift-nexus rift-nexus-player relative z-10 flex items-center justify-between w-full px-4 py-2.5 mt-3 bg-gradient-to-r from-slate-900/90 via-sky-950/40 to-slate-900/90 rounded-xl border border-sky-900/50 shadow-lg">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-sky-950 border border-sky-700/60 flex items-center justify-center text-sky-400 font-bold text-sm">
             Δ
@@ -432,7 +440,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
               {state.player1.baseHealth} / {state.player1.maxBaseHealth} HP
             </div>
           </div>
-          <div className="w-36 h-3 bg-slate-900 rounded-full overflow-hidden border border-sky-800/40 p-0.5">
+          <div className="rift-health-track w-36 h-3 bg-slate-900 rounded-full overflow-hidden border border-sky-800/40 p-0.5">
             <div
               className="h-full bg-gradient-to-r from-sky-600 to-sky-400 rounded-full transition-all duration-300"
               style={{
@@ -442,6 +450,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
           </div>
         </div>
       </div>
+      <EffectsOverlay state={state} />
     </div>
   );
 };

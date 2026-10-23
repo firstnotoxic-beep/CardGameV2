@@ -32,7 +32,7 @@ export const RankedModal: React.FC<RankedModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 select-none">
-      <div className="relative bg-slate-950 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="rift-modal rift-ranked-modal relative bg-slate-950 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
           <div className="flex items-center gap-2.5">

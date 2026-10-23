@@ -391,13 +391,10 @@ export const TacticalMapView: React.FC<TacticalMapViewProps> = ({
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
             transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-          }}
-          className="relative grid gap-1.5 p-6 rounded-3xl bg-slate-900/80 border border-slate-800/80 shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             gridTemplateColumns: `repeat(${state.mapWidth}, minmax(0, 1fr))`,
             width: `${state.mapWidth * 76}px`,
           }}
+          className="relative grid gap-1.5 p-6 rounded-3xl bg-slate-900/80 border border-slate-800/80 shadow-[0_0_50px_rgba(0,0,0,0.8)]"
         >
           {Array.from({ length: state.mapHeight }).map((_, y) =>
             Array.from({ length: state.mapWidth }).map((_, x) => {
@@ -736,8 +733,8 @@ export const TacticalMapView: React.FC<TacticalMapViewProps> = ({
                   disabled={
                     selectedUnit.currentAP < skill.apCost ||
                     skill.currentCooldown > 0 ||
-                    (skill.ammoCost && selectedUnit.currentAmmo < skill.ammoCost) ||
-                    (skill.manaCost && selectedUnit.currentMana < skill.manaCost)
+                    Boolean(skill.ammoCost && selectedUnit.currentAmmo < skill.ammoCost) ||
+                    Boolean(skill.manaCost && selectedUnit.currentMana < skill.manaCost)
                   }
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
                     state.currentCommandMode === 'skill-targeting' && state.selectedSkillId === skill.id

@@ -5,10 +5,297 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
-import { GAME_RULES_REGISTRY, UNSUPPORTED_MECHANICS_GUIDE } from './src/game/rules/gameRulesRegistry';
-import { validateUnitDraft } from './src/game/rules/validator';
 
 dotenv.config();
+
+// Game Rules Registry and Validator (Self-contained for Node ESM runtime)
+const GAME_RULES_REGISTRY: Record<string, any> = {
+  heal: {
+    type: 'heal',
+    name: 'Heal / Repair',
+    nameTh: 'ฟื้นฟูพลังชีวิต / ซ่อมแซม (Heal)',
+    description: 'Restores health to target friendly unit or structure up to max HP.',
+    defaultPower: 3,
+    minPower: 1,
+    maxPower: 8,
+    allowedTriggers: ['deploy', 'active', 'turn-start', 'death'],
+    allowedTargets: ['friendly-unit', 'self', 'all-friendly-in-lane'],
+  },
+  damage: {
+    type: 'damage',
+    name: 'Direct Strike',
+    nameTh: 'โจมตีสร้างความเสียหาย (Damage)',
+    description: 'Deals immediate kinetic, arcane, or laser damage to an enemy.',
+    defaultPower: 3,
+    minPower: 1,
+    maxPower: 8,
+    allowedTriggers: ['deploy', 'active', 'combat', 'death'],
+    allowedTargets: ['enemy-unit', 'outpost'],
+  },
+  shield: {
+    type: 'shield',
+    name: 'Barrier Matrix',
+    nameTh: 'สร้างเกราะบาเรียป้องกัน (Shield)',
+    description: 'Grants temporary barrier shield points that absorb incoming damage before HP.',
+    defaultPower: 3,
+    minPower: 1,
+    maxPower: 6,
+    allowedTriggers: ['deploy', 'turn-start', 'active'],
+    allowedTargets: ['self', 'friendly-unit', 'all-friendly-in-lane'],
+  },
+  move: {
+    type: 'move',
+    name: 'Maneuver / Teleport',
+    nameTh: 'เคลื่อนพลพิเศษ / เทเลพอร์ต (Move)',
+    description: 'Grants sudden extra movement points, tactical repositioning, or void teleportation.',
+    defaultPower: 2,
+    minPower: 1,
+    maxPower: 3,
+    allowedTriggers: ['deploy', 'active'],
+    allowedTargets: ['self', 'empty-cell'],
+  },
+  summon: {
+    type: 'summon',
+    name: 'Airborne / Reinforcements',
+    nameTh: 'เรียกลูกสมุน / เสริมกำลังพล (Summon)',
+    description: 'Summons tactical tokens, scout drones, or barricade defenders onto the battlefield.',
+    defaultPower: 2,
+    minPower: 1,
+    maxPower: 4,
+    allowedTriggers: ['deploy', 'active', 'death'],
+    allowedTargets: ['empty-cell'],
+  },
+  push: {
+    type: 'push',
+    name: 'Shockwave Push',
+    nameTh: 'คลื่นกระแทกผลักถอย (Push)',
+    description: 'Knocks enemy back 1 cell away from frontline, interrupting charge.',
+    defaultPower: 1,
+    minPower: 1,
+    maxPower: 2,
+    allowedTriggers: ['combat', 'active', 'deploy'],
+    allowedTargets: ['enemy-unit'],
+  },
+  buff: {
+    type: 'buff',
+    name: 'Tactical Overcharge',
+    nameTh: 'เพิ่มพลังโจมตี / ป้องกัน (Buff)',
+    description: 'Increases combat statistics of target friendly units for a limited duration.',
+    defaultPower: 2,
+    minPower: 1,
+    maxPower: 4,
+    allowedTriggers: ['deploy', 'turn-start', 'active'],
+    allowedTargets: ['friendly-unit', 'self'],
+  },
+  debuff: {
+    type: 'debuff',
+    name: 'EMP / Disruption',
+    nameTh: 'รบกวนคลื่น / ลดพลังข้าศึก (Debuff)',
+    description: 'Suppresses enemy attack, movement, or disables special abilities.',
+    defaultPower: 2,
+    minPower: 1,
+    maxPower: 4,
+    allowedTriggers: ['combat', 'active', 'deploy'],
+    allowedTargets: ['enemy-unit'],
+  },
+  deploy_structure: {
+    type: 'deploy_structure',
+    name: 'Fortification Deploy',
+    nameTh: 'สร้างป้อม / บังเกอร์ป้องกัน (Structure)',
+    description: 'Constructs a barricade, gun bunker, or energy relay on the lane.',
+    defaultPower: 4,
+    minPower: 2,
+    maxPower: 8,
+    allowedTriggers: ['deploy', 'active'],
+    allowedTargets: ['empty-cell'],
+  },
+  area_effect: {
+    type: 'area_effect',
+    name: 'Area Blast / Zone Pulse',
+    nameTh: 'ระเบิดพื้นที่วงกว้าง (Area Effect)',
+    description: 'Affects the target cell and adjacent tiles with blast damage or suppression.',
+    defaultPower: 2,
+    minPower: 1,
+    maxPower: 5,
+    allowedTriggers: ['deploy', 'death', 'active'],
+    allowedTargets: ['adjacent-cells', 'all-enemies-in-lane'],
+  },
+};
+
+const UNSUPPORTED_MECHANICS_GUIDE: Record<string, any> = {
+  steal_card: {
+    limitationTh: 'เกมยังไม่รองรับการขโมยการ์ดจากเด็คหรือมือของคู่ต่อสู้โดยตรงเพื่อรักษาความยุติธรรมของเด็ค 50 ใบ',
+    suggestedAlternativeTh: 'ใช้กลไกลดทอนพลังข้าศึก (Debuff/Disruption) หรือเพิ่มทรัพยากร/จั่วการ์ดให้ฝ่ายเราแทน',
+    alternativeAction: 'debuff',
+  },
+  mind_control: {
+    limitationTh: 'เกมยังไม่รองรับการยึดครองหรือควบคุมยูนิตข้าศึกแบบถาวร (Mind Control)',
+    suggestedAlternativeTh: 'ใช้กลไกแช่แข็งหยุดการเคลื่อนไหว (Stun/Freeze Debuff) หรือคลื่นกระแทกผลักถอย (Push) แทน',
+    alternativeAction: 'debuff',
+  },
+  instant_win: {
+    limitationTh: 'เกมไม่อนุญาตความสามารถประเภททำลายฐานทัพเน็กซัสทันทีโดยไม่มีการปะทะ (Instant Win)',
+    suggestedAlternativeTh: 'ใช้การสร้างความเสียหายโดยตรงรุนแรง (Direct Strike Damage) หรือการเพิ่มพลังโจมตีก้าวกระโดด (Buff) แทน',
+    alternativeAction: 'damage',
+  },
+  time_travel: {
+    limitationTh: 'เกมยังไม่รองรับการย้อนเทิร์นหรือข้ามเฟสการเล่นของคู่ต่อสู้',
+    suggestedAlternativeTh: 'ใช้การเคลื่อนพลแบบฉับพลัน (Move/Teleport) หรือปลดอาวุธคู่ต่อสู้ในรอบนั้นแทน',
+    alternativeAction: 'move',
+  },
+  invincibility: {
+    limitationTh: 'เกมไม่อนุญาตยูนิตอมตะถาวรที่ไม่รับความเสียหายใดๆ',
+    suggestedAlternativeTh: 'ใช้เกราะบาเรียชั่วคราว (Shield) หรือการฟื้นฟูเลือดต่อเนื่อง (Heal) แทน',
+    alternativeAction: 'shield',
+  },
+};
+
+function validateUnitDraft(input: any) {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (!input || typeof input !== 'object') {
+    return { isValid: false, errors: ['ข้อมูลยูนิตต้องเป็น JSON Object ที่ถูกต้อง'], warnings: [] };
+  }
+
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!name || name.length < 2) {
+    errors.push('ชื่อยูนิตต้องมีความยาวอย่างน้อย 2 ตัวอักษร');
+  } else if (name.length > 40) {
+    errors.push('ชื่อยูนิตต้องมีความยาวไม่เกิน 40 ตัวอักษร');
+  }
+
+  const validUniverses = [
+    'iron-frontier',
+    'arcane-dominion',
+    'neo-genesis',
+    'mythic-wilds',
+    'creators-circle',
+  ];
+  let universe = input.universe;
+  if (!validUniverses.includes(universe)) {
+    warnings.push(`จักรวาล '${input.universe}' ไม่ถูกต้อง กำหนดให้เป็น 'creators-circle'`);
+    universe = 'creators-circle';
+  }
+
+  const attack = Math.max(0, Math.min(12, Number(input.attack) || 0));
+  const health = Math.max(1, Math.min(20, Number(input.health) || 1));
+  const defense = Math.max(0, Math.min(6, Number(input.defense) || 0));
+  const move = Math.max(0, Math.min(4, Number(input.move) || 1));
+  const range = Math.max(1, Math.min(4, Number(input.range) || 1));
+
+  const validatedAbilities: any[] = [];
+  const rawAbilities = Array.isArray(input.abilities) ? input.abilities : [];
+  const abilitiesToProcess = rawAbilities.slice(0, 2);
+
+  abilitiesToProcess.forEach((rawAb: any, index: number) => {
+    if (!rawAb || typeof rawAb !== 'object') return;
+    const actionTypeStr = String(rawAb.actionType || '').trim().toLowerCase();
+    const rule = GAME_RULES_REGISTRY[actionTypeStr];
+
+    if (!rule) {
+      errors.push(
+        `ความสามารถ #${index + 1} ใช้กลไก '${rawAb.actionType}' ซึ่งระบบยังไม่รองรับ`
+      );
+      return;
+    }
+
+    const abilityName = typeof rawAb.name === 'string' && rawAb.name.trim().length > 0
+      ? rawAb.name.trim()
+      : rule.nameTh;
+    const abilityDesc = typeof rawAb.description === 'string' && rawAb.description.trim().length > 0
+      ? rawAb.description.trim()
+      : rule.description;
+
+    let trigger = rawAb.trigger || rule.allowedTriggers[0];
+    if (!rule.allowedTriggers.includes(trigger)) {
+      trigger = rule.allowedTriggers[0];
+    }
+
+    let power = Number(rawAb.powerValue);
+    if (isNaN(power) || power < rule.minPower) power = rule.defaultPower;
+    else if (power > rule.maxPower) power = rule.maxPower;
+
+    let cardEngineActionType = 'stat-buff';
+    if (actionTypeStr === 'heal') cardEngineActionType = 'heal';
+    else if (actionTypeStr === 'damage') cardEngineActionType = 'deal-damage';
+    else if (actionTypeStr === 'shield') cardEngineActionType = 'shield';
+    else if (actionTypeStr === 'move') cardEngineActionType = 'teleport';
+    else if (actionTypeStr === 'summon') cardEngineActionType = 'airborne-drop';
+    else if (actionTypeStr === 'area_effect') cardEngineActionType = 'aoe-damage';
+    else if (actionTypeStr === 'deploy_structure') cardEngineActionType = 'repair';
+
+    validatedAbilities.push({
+      id: rawAb.id || `ab-custom-${Date.now()}-${index}`,
+      name: abilityName,
+      description: abilityDesc,
+      trigger,
+      actionType: cardEngineActionType,
+      powerValue: power,
+    });
+  });
+
+  let chargeCost = Number(input.chargeCost);
+  if (isNaN(chargeCost) || chargeCost < 1) chargeCost = 1;
+  else if (chargeCost > 10) chargeCost = 10;
+
+  const riftCost = Number(input.riftCost || 0);
+
+  const keywords = Array.isArray(input.keywords)
+    ? input.keywords.map((k: any) => String(k).trim()).filter(Boolean).slice(0, 4)
+    : [];
+
+  const flavor = typeof input.flavor === 'string'
+    ? input.flavor.trim().slice(0, 150)
+    : 'ยูนิตที่กำเนิดขึ้นจากเตาหลอมมิติเน็กซัส';
+
+  const canCapture = typeof input.canCapture === 'boolean' ? input.canCapture : true;
+  const artwork = typeof input.artwork === 'string' && input.artwork.trim().length > 0
+    ? input.artwork.trim()
+    : undefined;
+
+  const cardId = input.id && typeof input.id === 'string' && input.id.startsWith('custom-')
+    ? input.id
+    : `custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+  const statTotal = attack + health + defense + move + range + (validatedAbilities.length * 3);
+  let rarity = 'common';
+  if (statTotal >= 24 || chargeCost >= 6) rarity = 'legendary';
+  else if (statTotal >= 20 || chargeCost >= 5) rarity = 'epic';
+  else if (statTotal >= 16 || chargeCost >= 4) rarity = 'rare';
+  else if (statTotal >= 12 || chargeCost >= 3) rarity = 'uncommon';
+
+  const sanitizedCard = {
+    id: cardId,
+    name,
+    universe,
+    cardType: 'unit',
+    rarity,
+    cost: {
+      charge: chargeCost,
+      rift: riftCost > 0 ? riftCost : undefined,
+    },
+    attack,
+    health,
+    defense,
+    move,
+    range,
+    canCapture,
+    keywords,
+    abilities: validatedAbilities,
+    flavor,
+    artwork,
+    isCustom: true,
+    customAuthor: input.customAuthor || 'Commander',
+  };
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+    sanitizedCard: errors.length === 0 ? sanitizedCard : undefined,
+  };
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

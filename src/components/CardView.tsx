@@ -76,7 +76,8 @@ export const CardView: React.FC<CardViewProps> = ({
     return (
       <div
         onClick={onClick}
-        className={`flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border transition-all cursor-pointer select-none ${
+        data-universe={card.universe}
+        className={`rift-card-compact flex items-center justify-between p-2 rounded-lg bg-slate-900/90 border transition-all cursor-pointer select-none ${
           isSelected ? 'border-cyan-400 ring-1 ring-cyan-400' : 'border-slate-800 hover:border-slate-600'
         }`}
       >
@@ -107,7 +108,8 @@ export const CardView: React.FC<CardViewProps> = ({
       <button
         onClick={onClick}
         type="button"
-        className={`group relative flex flex-col justify-between w-32 h-46 rounded-xl p-2 text-left transition-all duration-200 select-none border shrink-0 overflow-hidden ${
+        data-universe={card.universe}
+        className={`rift-card-hand group relative flex flex-col justify-between w-32 h-46 rounded-xl p-2 text-left transition-all duration-200 select-none border shrink-0 overflow-hidden ${
           isSelected
             ? 'scale-105 -translate-y-3 shadow-xl shadow-cyan-500/30 border-cyan-400 bg-slate-900 ring-2 ring-cyan-400'
             : canAfford
@@ -190,7 +192,8 @@ export const CardView: React.FC<CardViewProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative flex flex-col justify-between w-68 h-96 rounded-xl p-3.5 text-left transition-all duration-200 select-none border bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 shadow-2xl ${
+      data-universe={card.universe}
+      className={`rift-card-detail relative flex flex-col justify-between w-68 h-96 rounded-xl p-3.5 text-left transition-all duration-200 select-none border bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 shadow-2xl ${
         isSelected ? 'border-cyan-400 ring-2 ring-cyan-500/50' : getTypeBorder()
       } ${card.isCustom ? 'ring-1 ring-pink-500/40' : ''}`}
     >
