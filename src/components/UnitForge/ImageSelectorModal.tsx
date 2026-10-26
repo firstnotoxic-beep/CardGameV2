@@ -12,7 +12,7 @@ interface ImageSelectorModalProps {
 
 const TACTICAL_PRESETS = [
   {
-    name: 'จักรกลไอน้ำดีเซลพังค์ (Iron Frontier)',
+    name: 'จักรกลไอน้ำสนามเพลาะ (Iron Frontier)',
     url: '/src/assets/images/battlefield_arena_texture_1792637672663.jpg',
     category: 'iron-frontier',
   },
@@ -22,14 +22,39 @@ const TACTICAL_PRESETS = [
     category: 'iron-frontier',
   },
   {
-    name: 'ผู้บัญชาการพหุภพ (Nexus Commander)',
+    name: 'จอมทัพเน็กซัสไซเบอร์ (Nexus Commander)',
     url: '/src/assets/images/nexus_partner_commander_1792637674166.jpg',
     category: 'neo-genesis',
   },
   {
-    name: 'ใจกลางมิติเน็กซัส (Rift Nexus)',
+    name: 'แกนกลางมิติเน็กซัส (Rift Nexus)',
     url: '/src/assets/images/riftbound_nexus_title_1792637672325.jpg',
     category: 'arcane-dominion',
+  },
+  {
+    name: 'กองหน้าเกราะเหล็ก (Ironclad Vanguard)',
+    url: '/src/assets/images/battlefield_arena_texture_1792637672663.jpg',
+    category: 'iron-frontier',
+  },
+  {
+    name: 'พลร่มประจัญบาน (Airborne Paratrooper)',
+    url: '/src/assets/images/airbase_deployment_art_1792637673708.jpg',
+    category: 'neo-genesis',
+  },
+  {
+    name: 'มนตราแห่งความว่างเปล่า (Void Sorcery)',
+    url: '/src/assets/images/riftbound_nexus_title_1792637672325.jpg',
+    category: 'arcane-dominion',
+  },
+  {
+    name: 'พญาอสูรพงไพรโบราณ (Apex Bio-Titan)',
+    url: '/src/assets/images/battlefield_arena_texture_1792637672663.jpg',
+    category: 'mythic-wilds',
+  },
+  {
+    name: 'สถาปนิกเตาหลอมเน็กซัส (Omni Architect)',
+    url: '/src/assets/images/nexus_partner_commander_1792637674166.jpg',
+    category: 'creators-circle',
   },
 ];
 
@@ -300,9 +325,25 @@ export const ImageSelectorModal: React.FC<ImageSelectorModalProps> = ({
               </div>
 
               {aiError && (
-                <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{aiError}</span>
+                <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-700/80 text-rose-200 text-xs space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{aiError}</span>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => setActiveTab('presets')}
+                      className="px-3 py-1.5 rounded-lg bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-500/50 text-[11px] font-bold transition cursor-pointer"
+                    >
+                      เลือกจากคลังภาพ Preset
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('upload')}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold transition cursor-pointer"
+                    >
+                      อัปโหลดภาพของคุณเอง
+                    </button>
+                  </div>
                 </div>
               )}
 

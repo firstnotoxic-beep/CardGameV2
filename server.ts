@@ -390,7 +390,14 @@ app.post('/api/forge/generate', async (req, res) => {
       });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
 
     // System prompt with strict Game Rules Registry schemas and limitation enforcement
     const systemInstruction = `
@@ -468,18 +475,33 @@ ${roleHint ? `Preferred Combat Role: ${roleHint}` : ''}
 Generate the unit JSON now following all Game Rules strictly.
 `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: [
-        { role: 'user', parts: [{ text: `${systemInstruction}\n\n${userMessage}` }] },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-        temperature: 0.7,
-      },
-    });
-
-    const responseText = response.text || '';
+    let responseText = '';
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-lite',
+        contents: [
+          { role: 'user', parts: [{ text: `${systemInstruction}\n\n${userMessage}` }] },
+        ],
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.7,
+        },
+      });
+      responseText = response.text || '';
+    } catch (primaryErr: any) {
+      console.warn('Primary model gemini-3.1-flash-lite encountered issue, trying gemini-3.8-flash:', primaryErr?.message);
+      const fallbackResponse = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: [
+          { role: 'user', parts: [{ text: `${systemInstruction}\n\n${userMessage}` }] },
+        ],
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.7,
+        },
+      });
+      responseText = fallbackResponse.text || '';
+    }
     let parsed: any;
     try {
       parsed = JSON.parse(responseText.trim());
@@ -541,7 +563,14 @@ app.post('/api/art/generate', async (req, res) => {
       });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
 
     // Faction style guidance for distinct universe aesthetics
     let styleGuide = 'Epic dark sci-fi tactical card game illustration, dramatic lighting, sharp details, centered subject, 4:3 card framing, no card border, no text.';
@@ -606,6 +635,22 @@ app.post('/api/art/generate', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Gemini Art Generation Error:', error);
+    const errText = error?.message || String(error);
+    const isQuota =
+      error?.status === 429 ||
+      errText.includes('429') ||
+      errText.includes('quota') ||
+      errText.includes('RESOURCE_EXHAUSTED') ||
+      errText.includes('limit: 0');
+
+    if (isQuota) {
+      return res.status(429).json({
+        error:
+          'ระบบสร้างภาพ AI (Gemini Image) จำเป็นต้องใช้ API Key ที่เปิดระบบ Billing (Pay-as-you-go) ใน Google AI Studio เนื่องจากโมเดลรูปภาพไม่มีโควต้าใน Free Tier (Limit: 0) ทั้งนี้ท่านสามารถเลือกใช้รูปภาพ Preset งดงามในระบบ หรืออัปโหลดรูปภาพของคุณเองได้ทันที',
+        isQuotaExceeded: true,
+      });
+    }
+
     return res.status(500).json({
       error: error.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบสร้างภาพ AI',
     });

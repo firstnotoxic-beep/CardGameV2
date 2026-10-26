@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreatorContentRecord, ContentType } from '../../types/creator';
 import { creatorService } from '../../services/creatorService';
+import { auth, loginWithGoogle } from '../../services/firebase';
 import { CardView } from '../CardView';
 import { toCardDefinitionFromCreator } from '../../game/rules/creatorValidator';
 import { soundFx } from '../../utils/audio';
@@ -64,6 +65,16 @@ export const MyCollection: React.FC<MyCollectionProps> = ({
         const updated = await creatorService.unpublishContent(item.id);
         showToast(`ถอนการเผยแพร่ '${updated.name}' กลับสู่คลังส่วนตัวแล้ว`);
       } else {
+        if (!auth.currentUser) {
+          try {
+            await loginWithGoogle();
+          } catch (e: any) {
+            if (e?.code !== 'auth/popup-closed-by-user') {
+              showToast('กรุณาเข้าสู่ระบบด้วย Google ก่อนเผยแพร่สู่หอสมุดพหุภพ');
+            }
+            return;
+          }
+        }
         const updated = await creatorService.publishContent(item.id);
         soundFx.playVictory();
         showToast(`เผยแพร่ '${updated.name}' สู่หอสมุดพหุภพ (Public Gallery) สำเร็จ!`);

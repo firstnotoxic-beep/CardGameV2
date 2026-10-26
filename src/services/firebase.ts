@@ -1,5 +1,13 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
+import {
+  getAuth,
+  signInAnonymously,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged,
+  User,
+} from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -8,9 +16,49 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
 // Use named firestoreDatabaseId if configured
-export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+export const db =
+  firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
+    ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+    : getFirestore(app);
+
+// State tracking for anonymous auth availability
+let isAnonymousDisabled = false;
+let hasAttemptedAnonymous = false;
+
+export function isAnonymousAuthDisabled(): boolean {
+  return isAnonymousDisabled;
+}
+
+export function getCurrentUser(): User | null {
+  return auth.currentUser;
+}
+
+export function subscribeToAuth(callback: (user: User | null) => void): () => void {
+  return onAuthStateChanged(auth, callback);
+}
+
+// Google Sign-In with popup
+export async function loginWithGoogle(): Promise<User> {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  try {
+    const cred = await signInWithPopup(auth, provider);
+    return cred.user;
+  } catch (error: any) {
+    console.error('Google Sign-In failed:', error);
+    throw error;
+  }
+}
+
+// User Sign-Out
+export async function logoutUser(): Promise<void> {
+  try {
+    await signOut(auth);
+  } catch (error: any) {
+    console.error('Sign-Out failed:', error);
+    throw error;
+  }
+}
 
 // Test connection on boot
 export async function testFirestoreConnection(): Promise<boolean> {
@@ -27,15 +75,32 @@ export async function testFirestoreConnection(): Promise<boolean> {
   }
 }
 
-// Auto sign-in anonymously for seamless session management
-export function initAuthSession(onUserReady: (user: User) => void): () => void {
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
+// Auto sign-in or session observer with graceful handling of auth/admin-restricted-operation
+export function initAuthSession(onUserChange: (user: User | null) => void): () => void {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
     if (user) {
-      onUserReady(user);
+      onUserChange(user);
     } else {
-      signInAnonymously(auth).catch((err) => {
-        console.warn('Anonymous auth sign-in error:', err);
-      });
+      onUserChange(null);
+      // Attempt anonymous auth once if not already known to be disabled
+      if (!hasAttemptedAnonymous && !isAnonymousDisabled) {
+        hasAttemptedAnonymous = true;
+        try {
+          await signInAnonymously(auth);
+        } catch (err: any) {
+          if (
+            err?.code === 'auth/admin-restricted-operation' ||
+            String(err?.message || '').includes('admin-restricted-operation')
+          ) {
+            isAnonymousDisabled = true;
+            console.info(
+              '[Firebase Auth] Anonymous authentication is disabled in Firebase Console (auth/admin-restricted-operation). Operating in Guest / Google Sign-In mode.'
+            );
+          } else {
+            console.warn('[Firebase Auth] Anonymous sign-in note:', err?.message || err);
+          }
+        }
+      }
     }
   });
 
@@ -47,8 +112,26 @@ export async function ensureAuth(): Promise<User> {
   if (auth.currentUser) {
     return auth.currentUser;
   }
-  const credential = await signInAnonymously(auth);
-  return credential.user;
+
+  // If anonymous auth is not disabled, try it
+  if (!isAnonymousDisabled) {
+    try {
+      const credential = await signInAnonymously(auth);
+      return credential.user;
+    } catch (err: any) {
+      if (
+        err?.code === 'auth/admin-restricted-operation' ||
+        String(err?.message || '').includes('admin-restricted-operation')
+      ) {
+        isAnonymousDisabled = true;
+      }
+    }
+  }
+
+  // If we reach here, anonymous sign-in is disabled or unavailable. Prompt for Google Sign-in.
+  throw new Error(
+    'กรุณาเข้าสู่ระบบด้วย Google บัญชีจริง (กดปุ่ม "เข้าสู่ระบบด้วย Google" ด้านบน) เพื่อเปิดห้องออนไลน์หรือบันทึกข้อมูลไปยังคลาวด์'
+  );
 }
 
 export enum OperationType {

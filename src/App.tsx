@@ -32,7 +32,9 @@ import {
 import { Lane } from './types/game';
 import { runAITurn } from './game/ai';
 import { BattlefieldView } from './components/BattlefieldView';
+import { Battlefield3DView } from './components/Battlefield3DView';
 import { TacticalMapView } from './components/TacticalMapView';
+import { TacticalMap3DView } from './components/TacticalMap3DView';
 import { TacticalGameState } from './types/tactical';
 import { initializeTacticalGame } from './game/tactical/turnManager';
 import { CardView } from './components/CardView';
@@ -75,6 +77,7 @@ import {
   AlertCircle,
   Copy,
   Check,
+  Box,
 } from 'lucide-react';
 
 export default function App() {
@@ -90,6 +93,10 @@ export default function App() {
   const [editingContentId, setEditingContentId] = useState<string | undefined>(undefined);
   const [remixDraft, setRemixDraft] = useState<CreatorContentRecord | undefined>(undefined);
   const [validationErrorBanner, setValidationErrorBanner] = useState<string | null>(null);
+
+  // 3D Interactive WebGL Arena vs 2D Tactical Board mode
+  const [battleViewMode, setBattleViewMode] = useState<'3d' | '2d'>('3d');
+  const [tacticalViewMode, setTacticalViewMode] = useState<'3d' | '2d'>('3d');
 
   // Turn Timer state (60 seconds limit for deployment and movement phases)
   const [turnTimeLeft, setTurnTimeLeft] = useState<number>(60);
@@ -1341,7 +1348,18 @@ export default function App() {
   }
 
   if (screen === 'battle' && tacticalGameState) {
-    return (
+    return tacticalViewMode === '3d' ? (
+      <TacticalMap3DView
+        state={tacticalGameState}
+        onStateChange={setTacticalGameState}
+        viewerRole={multiplayerRole || 'player1'}
+        onExitMatch={() => {
+          setTacticalGameState(null);
+          setScreen('lobby');
+        }}
+        onToggle2DMode={() => setTacticalViewMode('2d')}
+      />
+    ) : (
       <TacticalMapView
         state={tacticalGameState}
         onStateChange={setTacticalGameState}
@@ -1350,6 +1368,7 @@ export default function App() {
           setTacticalGameState(null);
           setScreen('lobby');
         }}
+        onToggle3DMode={() => setTacticalViewMode('3d')}
       />
     );
   }
@@ -1571,6 +1590,19 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setBattleViewMode(battleViewMode === '3d' ? '2d' : '3d')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer transition-all flex items-center gap-1.5 ${
+              battleViewMode === '3d'
+                ? 'bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border-cyan-500/50 shadow-md shadow-cyan-950/40 ring-1 ring-cyan-500/40'
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+            }`}
+            title="สลับระหว่างโหมด 3D WebGL Arena และกระดาน 2D"
+          >
+            <Box className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{battleViewMode === '3d' ? 'โหมด 3D' : 'โหมด 2D'}</span>
+          </button>
+
+          <button
             onClick={() => setShowRulesModal(true)}
             className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold cursor-pointer"
           >
@@ -1625,15 +1657,29 @@ export default function App() {
             </div>
           )}
 
-          <BattlefieldView
-            state={gameState}
-            onCellClick={handleCellClick}
-            onUnitClick={handleUnitClick}
-            onAirbaseDropClick={handleAirbaseDropClick}
-            onLaneClick={handleLaneClick}
-            canPerformAirborneDrop={canAffordAirborne}
-            selectedAirbase={selectedAirbase}
-          />
+          {battleViewMode === '3d' ? (
+            <Battlefield3DView
+              state={gameState}
+              onCellClick={handleCellClick}
+              onUnitClick={handleUnitClick}
+              onAirbaseDropClick={handleAirbaseDropClick}
+              onLaneClick={handleLaneClick}
+              canPerformAirborneDrop={canAffordAirborne}
+              selectedAirbase={selectedAirbase}
+              onToggle2DMode={() => setBattleViewMode('2d')}
+            />
+          ) : (
+            <BattlefieldView
+              state={gameState}
+              onCellClick={handleCellClick}
+              onUnitClick={handleUnitClick}
+              onAirbaseDropClick={handleAirbaseDropClick}
+              onLaneClick={handleLaneClick}
+              canPerformAirborneDrop={canAffordAirborne}
+              selectedAirbase={selectedAirbase}
+              onToggle3DMode={() => setBattleViewMode('3d')}
+            />
+          )}
         </div>
 
         {/* RIGHT CONTROL COLUMN: INSPECTOR & LOGS (4 cols) */}

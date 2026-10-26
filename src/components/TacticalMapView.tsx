@@ -48,6 +48,7 @@ import {
   RotateCcw,
   Sparkles,
   Flame,
+  Layers,
   Award,
 } from 'lucide-react';
 
@@ -56,6 +57,7 @@ interface TacticalMapViewProps {
   onStateChange: (newState: TacticalGameState) => void;
   viewerRole?: 'player1' | 'player2' | 'spectator';
   onExitMatch?: () => void;
+  onToggle3DMode?: () => void;
 }
 
 export const TacticalMapView: React.FC<TacticalMapViewProps> = ({
@@ -63,6 +65,7 @@ export const TacticalMapView: React.FC<TacticalMapViewProps> = ({
   onStateChange,
   viewerRole = 'player1',
   onExitMatch,
+  onToggle3DMode,
 }) => {
   // Zoom & Pan Camera Controls
   const [zoom, setZoom] = useState<number>(1);
@@ -319,6 +322,17 @@ export const TacticalMapView: React.FC<TacticalMapViewProps> = ({
 
         {/* Viewport & Match Controls */}
         <div className="flex items-center gap-2">
+          {onToggle3DMode && (
+            <button
+              onClick={onToggle3DMode}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-300 transition-colors shadow-md cursor-pointer"
+              title="สลับเป็นโหมด RTS 3D สมจริง (Stickman & 3D Environment)"
+            >
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              <span>โหมด 3D RTS</span>
+            </button>
+          )}
+
           {/* Fog of war toggle for testing/spectating */}
           <button
             onClick={() => setRevealFogOfWar(!revealFogOfWar)}

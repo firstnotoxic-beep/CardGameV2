@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameState, TerrainCell, UnitInstance, StructureInstance, OutpostState, Lane } from '../types/game';
-import { Shield, Swords, Heart, Flag, Navigation, Plane, AlertTriangle, Zap, Radio, Castle, Crosshair, Target } from 'lucide-react';
+import { Shield, Swords, Heart, Flag, Navigation, Plane, AlertTriangle, Zap, Radio, Castle, Crosshair, Target, Box } from 'lucide-react';
 import { UNIVERSE_CONFIG, CARD_DATABASE } from '../data/cards';
 import { getCellId } from '../game/battlefield';
 import { CardArtwork } from './CardArtwork';
@@ -14,6 +14,7 @@ interface BattlefieldViewProps {
   onLaneClick?: (lane: Lane) => void;
   canPerformAirborneDrop: boolean;
   selectedAirbase: StructureInstance | null;
+  onToggle3DMode?: () => void;
 }
 
 export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
@@ -24,6 +25,7 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
   onLaneClick,
   canPerformAirborneDrop,
   selectedAirbase,
+  onToggle3DMode,
 }) => {
   const {
     cells,
@@ -76,8 +78,20 @@ export const BattlefieldView: React.FC<BattlefieldViewProps> = ({
           </div>
         </div>
 
-        {/* Base Health Bar */}
+        {/* Base Health Bar & 3D Mode Button */}
         <div className="flex items-center gap-3">
+          {onToggle3DMode && (
+            <button
+              type="button"
+              onClick={onToggle3DMode}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 text-xs font-bold shadow-md cursor-pointer transition-colors"
+              title="สลับไปโหมด 3D Interactive Arena"
+            >
+              <Box className="w-3.5 h-3.5 text-cyan-400" />
+              <span>โหมด 3D</span>
+            </button>
+          )}
+
           <div className="text-right">
             <div className="text-[10px] uppercase font-bold text-rose-400 tracking-wider">
               ความสมบูรณ์เน็กซัส (Nexus Integrity)

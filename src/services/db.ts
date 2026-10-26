@@ -91,43 +91,68 @@ class GameDatabaseService {
     this.initFirebase();
   }
 
+  private userListeners: Set<(user: UserProfile) => void> = new Set();
+
   private initFirebase() {
     // Test Firestore connection on boot
     testFirestoreConnection().catch(() => {});
 
     // Initialize Auth Session
     initAuthSession(async (user) => {
-      this.firebaseReady = true;
-      const uid = user.uid;
-      this.currentUser = {
-        ...this.currentUser,
-        uid,
-        email: user.email || this.currentUser.email,
-        updatedAt: new Date().toISOString(),
-      };
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(this.currentUser));
+      if (user) {
+        this.firebaseReady = true;
+        const uid = user.uid;
+        this.currentUser = {
+          ...this.currentUser,
+          uid,
+          email: user.email || this.currentUser.email,
+          displayName: user.displayName || this.currentUser.displayName,
+          updatedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(this.currentUser));
+        this.notifyUserListeners();
 
-      // Sync Firestore profile document
+        // Sync Firestore profile document
+        try {
+          const userRef = doc(db, 'users', uid);
+          await setDoc(
+            userRef,
+            {
+              uid,
+              displayName: this.currentUser.displayName,
+              elo: this.currentUser.elo,
+              rankTitle: this.currentUser.rankTitle,
+              email: this.currentUser.email || '',
+              updatedAt: new Date().toISOString(),
+              createdAt: this.currentUser.createdAt,
+            },
+            { merge: true }
+          );
+
+          // Sync remote units from Firestore
+          await this.syncFromFirestore(uid);
+        } catch (err) {
+          console.warn('Firestore sync note:', err);
+        }
+      } else {
+        this.firebaseReady = false;
+        this.notifyUserListeners();
+      }
+    });
+  }
+
+  public subscribeUser(listener: (user: UserProfile) => void): () => void {
+    this.userListeners.add(listener);
+    listener(this.currentUser);
+    return () => this.userListeners.delete(listener);
+  }
+
+  private notifyUserListeners() {
+    this.userListeners.forEach((l) => {
       try {
-        const userRef = doc(db, 'users', uid);
-        await setDoc(
-          userRef,
-          {
-            uid,
-            displayName: this.currentUser.displayName,
-            elo: this.currentUser.elo,
-            rankTitle: this.currentUser.rankTitle,
-            email: this.currentUser.email || '',
-            updatedAt: new Date().toISOString(),
-            createdAt: this.currentUser.createdAt,
-          },
-          { merge: true }
-        );
-
-        // Sync remote units from Firestore
-        await this.syncFromFirestore(uid);
-      } catch (err) {
-        console.warn('Firestore sync note:', err);
+        l(this.currentUser);
+      } catch (e) {
+        console.warn('User listener error:', e);
       }
     });
   }

@@ -267,6 +267,79 @@ class AudioManager {
     });
   }
 
+  // Meteor falling and explosion sound
+  public playMeteorImpact() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+
+    // 1. High-frequency falling whoosh
+    const whooshOsc = this.ctx.createOscillator();
+    const whooshGain = this.ctx.createGain();
+    whooshOsc.type = 'sawtooth';
+    whooshOsc.frequency.setValueAtTime(800, now);
+    whooshOsc.frequency.exponentialRampToValueAtTime(120, now + 0.6);
+    whooshGain.gain.setValueAtTime(0.2, now);
+    whooshGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+    whooshOsc.connect(whooshGain);
+    whooshGain.connect(this.ctx.destination);
+    whooshOsc.start(now);
+    whooshOsc.stop(now + 0.6);
+
+    // 2. Heavy cataclysmic explosion bass impact (timed at impact ~0.6s)
+    const impactTime = now + 0.55;
+    const boomOsc = this.ctx.createOscillator();
+    const boomGain = this.ctx.createGain();
+    boomOsc.type = 'triangle';
+    boomOsc.frequency.setValueAtTime(180, impactTime);
+    boomOsc.frequency.exponentialRampToValueAtTime(25, impactTime + 0.9);
+    boomGain.gain.setValueAtTime(0.35, impactTime);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, impactTime + 1.1);
+    boomOsc.connect(boomGain);
+    boomGain.connect(this.ctx.destination);
+    boomOsc.start(impactTime);
+    boomOsc.stop(impactTime + 1.1);
+  }
+
+  // Realistic rifle / cannon gunshot
+  public playGunshot(type: 'rifle' | 'cannon' | 'plasma' = 'rifle') {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    if (type === 'plasma') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(1100, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.18);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    } else if (type === 'cannon') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.35);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    } else {
+      // Crisp rifle blast
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(480, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    }
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  }
+
   // Error buzzer / invalid action
   public playError() {
     if (this.isMuted) return;

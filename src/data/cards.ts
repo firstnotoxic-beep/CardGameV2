@@ -293,6 +293,33 @@ export const CARD_DATABASE: Record<string, CardDefinition> = {
     ],
   },
 
+  'AD-07': {
+    id: 'AD-07',
+    name: 'มหาวิบัติอุกกาบาตเพลิง (Cataclysmic Meteor Strike)',
+    universe: 'arcane-dominion',
+    cardType: 'tactic',
+    rarity: 'epic',
+    cost: { charge: 3, rift: 1 },
+    playMode: 'cast-spell',
+    targetRule: {
+      mode: 'enemy-unit',
+      effectType: 'damage',
+      powerValue: 6,
+      promptText: 'เลือกยูนิตหรือเป้าหมายศัตรูเพื่ออัญเชิญอุกกาบาตยักษ์ถล่ม',
+    },
+    flavor: 'ฉีกช่องว่างมิติเพื่อนำอุกกาบาตเพลิงบรรพกาลพุ่งชนศัตรูอย่างรุนแรงจนแผ่นดินสะเทือน',
+    abilities: [
+      {
+        id: 'ab-meteor-strike',
+        name: 'อุกกาบาตหายนะ (Meteor Strike)',
+        description: 'อัญเชิญอุกกาบาตเพลิงตกลงมาสร้างความเสียหาย 6 หน่วยแก่เป้าหมายศัตรู',
+        trigger: 'active',
+        actionType: 'deal-damage',
+        powerValue: 6,
+      },
+    ],
+  },
+
   // ==========================================
   // 3. NEO GENESIS (ไซเบอร์เนติกส์และเทคโนโลยีขั้นสูง)
   // ==========================================
